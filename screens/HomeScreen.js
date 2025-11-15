@@ -1,117 +1,81 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import React, { useState } from "react";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, Alert } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { useTasks } from "../context/TaskContext";
+import { useTheme } from "../context/ThemeContext";
 
 export default function HomeScreen() {
-  const [tasks, setTasks] = useState([
-    { id: '1', title: 'Sacar la basura', done: false },
-    { id: '2', title: 'Comprar comida', done: true },
-    { id: '3', title: 'Hacer ejercicio', done: false },
-  ]);
+  const { tasks, toggleTask, deleteCompleted } = useTasks();
+  const { theme } = useTheme();
 
-  const toggleTask = (id) => {
-    setTasks(tasks.map(t =>
-      t.id === id ? { ...t, done: !t.done } : t
-    ));
+  const colors = theme === "light" ? {
+    background: "#F1F7FF",
+    card: "#FFFFFF",
+    cardDone: "#DDF7DD",
+    text: "#2E4A70",
+    activeIcon: "#67A9FF"
+  } : {
+    background: "#1B2A38",
+    card: "#2A3A4E",
+    cardDone: "#3B4A5E",
+    text: "#E0E0E0",
+    activeIcon: "#67A9FF"
   };
 
-  const deleteCompleted = () => {
-    setTasks(tasks.filter(t => !t.done));
+  const confirmDelete = () => {
+    Alert.alert(
+      "Eliminar tareas",
+      "¿Estás seguro que quieres eliminar las tareas completadas?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Eliminar", style: "destructive", onPress: deleteCompleted }
+      ]
+    );
   };
 
   return (
-    <View style={styles.container}>
-
-      {/* Logo */}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Image source={require('../assets/logoTF.png')} style={styles.logo} />
-
-      <Text style={styles.title}>Mis Tareas</Text>
+      <Text style={[styles.title, { color: colors.text }]}>Mis Tareas</Text>
 
       <FlatList
         data={tasks}
-        keyExtractor={item => item.id}
+        keyExtractor={(item) => item.id.toString()}
         style={{ width: '100%' }}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={[styles.card, item.done && styles.cardDone]}
+            style={[styles.card, { backgroundColor: item.done ? colors.cardDone : colors.card }]}
             onPress={() => toggleTask(item.id)}
           >
             <Ionicons
-              name={item.done ? 'checkmark-circle' : 'ellipse-outline'}
+              name={item.done ? "checkmark-circle" : "ellipse-outline"}
               size={28}
-              color={item.done ? '#4CAF50' : '#5A6BF0'}
+              color={item.done ? "#4CAF50" : colors.activeIcon}
             />
-
-            <Text style={[styles.cardText, item.done && styles.cardTextDone]}>
+            <Text style={[styles.cardText, { color: colors.text }, item.done && styles.cardTextDone]}>
               {item.title}
             </Text>
+            {item.desc ? <Text style={{ color: colors.text, fontSize: 14 }}>{item.desc}</Text> : null}
+            {item.date ? <Text style={{ color: colors.text, fontSize: 12 }}>{item.date} {item.hour}</Text> : null}
           </TouchableOpacity>
         )}
       />
 
-      {/* Botón eliminar */}
-      <TouchableOpacity style={styles.deleteButton} onPress={deleteCompleted}>
+      <TouchableOpacity style={[styles.deleteButton, { backgroundColor: "#FF4E4E" }]} onPress={confirmDelete}>
         <Ionicons name="trash-outline" size={22} color="#fff" />
         <Text style={styles.deleteText}>Eliminar tareas completadas</Text>
       </TouchableOpacity>
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8F9FF',
-    alignItems: 'center',
-    paddingTop: 40,
-  },
-  logo: {
-    width: 85,
-    height: 85,
-    marginBottom: 10,
-    resizeMode: 'contain',
-  },
-  title: {
-    fontSize: 26,
-    fontWeight: '700',
-    color: '#333',
-    marginBottom: 20,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 15,
-    marginVertical: 8,
-    marginHorizontal: 20,
-    borderRadius: 14,
-    elevation: 3,
-  },
-  cardDone: {
-    backgroundColor: '#DFF7DF',
-  },
-  cardText: {
-    marginLeft: 15,
-    fontSize: 18,
-    color: '#333',
-    fontWeight: '500',
-  },
-  cardTextDone: {
-    textDecorationLine: 'line-through',
-    color: '#6F6F6F',
-  },
-  deleteButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FF4E4E',
-    padding: 12,
-    borderRadius: 10,
-    marginVertical: 15,
-  },
-  deleteText: {
-    color: '#fff',
-    fontSize: 15,
-    marginLeft: 8,
-  },
+  container: { flex: 1, paddingTop: 40, alignItems: "center" },
+  logo: { width: 180, height: 85, marginBottom: 10, resizeMode: "contain" },
+  title: { fontSize: 26, fontWeight: "700", marginBottom: 20 },
+  card: { flexDirection: "column", alignItems: "flex-start", padding: 15, marginVertical: 8, marginHorizontal: 20, borderRadius: 14, elevation: 3 },
+  cardText: { fontSize: 18, fontWeight: "500", marginTop: 4 },
+  cardTextDone: { textDecorationLine: "line-through", color: "#6F6F6F" },
+  deleteButton: { flexDirection: "row", alignItems: "center", padding: 12, borderRadius: 10, marginVertical: 15 },
+  deleteText: { color: "#fff", fontSize: 15, marginLeft: 8 }
 });
